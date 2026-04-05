@@ -1,11 +1,10 @@
--- kinda ass but who gaf
-
 local function getService(serviceName)
     return cloneref(game:GetService(serviceName))
 end
 
 local Players = getService("Players")
 local RunService = getService("RunService")
+local Teams = getService("Teams")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
@@ -13,11 +12,12 @@ local Camera = workspace.CurrentCamera
 local Aimbot = {
     Settings = {
         Smoothness = 8,
-        CurrentMode = "mousemoverel",
+        CurrentMode = "camera",
         AimMode = "FOV",
         WallCheck = true,
         TargetPart = "Head",
         TeamCheck = true,
+        BlacklistTeam = {}
     },
 
     FOVSettings = {
@@ -104,6 +104,10 @@ local function isValidTarget(player)
         if player.Team == LocalPlayer.Team then
             return false
         end
+    end
+
+    if player.Team and Aimbot.Settings.BlacklistTeam[player.Team] then
+        return false
     end
 
     return true
@@ -343,7 +347,6 @@ function Aimbot:UpdateSettings(key, value)
         return true
     end
 
-    warn("Failed to update setting:", key)
     return false
 end
 
@@ -360,8 +363,35 @@ function Aimbot:UpdateFov(key, value)
         return true
     end
 
-    warn("Failed to update FOV setting:", key)
     return false
+end
+
+function Aimbot:blacklistTeam(teamName)
+    if typeof(teamName) ~= "string" then
+        return false
+    end
+
+    local teamInstance = Teams:FindFirstChild(teamName)
+    if not teamInstance then
+        return false
+    end
+
+    self.Settings.BlacklistTeam[teamInstance] = true
+    return true
+end
+
+function Aimbot:unblacklistTeam(teamName)
+    if typeof(teamName) ~= "string" then
+        return false
+    end
+
+    local teamInstance = Teams:FindFirstChild(teamName)
+    if not teamInstance then
+        return false
+    end
+
+    self.Settings.BlacklistTeam[teamInstance] = nil
+    return true
 end
 
 return Aimbot
