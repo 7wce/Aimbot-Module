@@ -12,14 +12,12 @@ local Camera = workspace.CurrentCamera
 local Aimbot = {
     Settings = {
         Smoothness = 8,
-        CurrentMode = "mousemoverel",
+        CurrentMode = "camera",
         AimMode = "FOV",
         WallCheck = true,
         TargetPart = "Head",
         TeamCheck = true,
-        BlacklistTeam = {},
-        StickyAim = true,
-        Prediction = true
+        BlacklistTeam = {}
     },
 
     FOVSettings = {
@@ -30,8 +28,7 @@ local Aimbot = {
     },
 
     AimbotConnection = nil,
-    FOVCircle = nil,
-    CurrentTarget = nil,
+    FOVCircle = nil
 }
 
 local function getTargetPart(character)
@@ -56,32 +53,6 @@ local function getTargetPart(character)
         or character:FindFirstChild("HumanoidRootPart")
         or character:FindFirstChild("Torso")
         or character:FindFirstChild("LowerTorso")
-end
-
-local function isAlive(character)
-    if not character then
-        return false
-    end
-
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    if not humanoid then
-        return false
-    end
-
-    return humanoid.Health > 0
-end
-
-local function getPredictedPosition(part)
-    if not Aimbot.Settings.Prediction then
-        return part.Position
-    end
-
-    local velocity = part.Velocity
-    local distance = (Camera.CFrame.Position - part.Position).Magnitude
-
-    local predictionTime = distance / 100
-
-    return part.Position + (velocity * predictionTime)
 end
 
 local function isVisible(targetPosition)
@@ -129,11 +100,6 @@ local function isValidTarget(player)
         return false
     end
 
-    local character = player.Character
-    if not isAlive(character) then
-        return false
-    end
-
     if Aimbot.Settings.TeamCheck then
         if player.Team == LocalPlayer.Team then
             return false
@@ -163,7 +129,7 @@ local function getClosestTargetInFOV()
         if isValidTarget(player) then
             local targetCharacter = player.Character
 
-            if targetCharacter and isAlive(targetCharacter) then
+            if targetCharacter then
                 local targetPart = getTargetPart(targetCharacter)
 
                 if targetPart then
@@ -205,7 +171,7 @@ local function getNearestTarget()
         if isValidTarget(player) then
             local targetCharacter = player.Character
 
-            if targetCharacter and isAlive(targetCharacter) then
+            if targetCharacter then
                 local targetPart = getTargetPart(targetCharacter)
 
                 if targetPart then
@@ -231,29 +197,11 @@ local function getNearestTarget()
 end
 
 local function getCurrentTarget()
-    if Aimbot.Settings.StickyAim and Aimbot.CurrentTarget then
-        if isValidTarget(Aimbot.CurrentTarget) then
-            local char = Aimbot.CurrentTarget.Character
-            if char and isAlive(char) then
-                return Aimbot.CurrentTarget
-            end
-        end
-        Aimbot.CurrentTarget = nil
-    end
-
-    local target
-
     if Aimbot.Settings.AimMode == "FOV" then
-        target = getClosestTargetInFOV()
+        return getClosestTargetInFOV()
     else
-        target = getNearestTarget()
+        return getNearestTarget()
     end
-
-    if Aimbot.Settings.StickyAim then
-        Aimbot.CurrentTarget = target
-    end
-
-    return target
 end
 
 local function aimAt(position)
@@ -308,8 +256,7 @@ local function updateAimbot()
         return
     end
 
-    local predictedPosition = getPredictedPosition(targetPart)
-    aimAt(predictedPosition)
+    aimAt(targetPart.Position)
 end
 
 local function createFOVCircle()
